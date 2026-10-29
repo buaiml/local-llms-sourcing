@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Benchmark local LLMs on your hardware and crowdsource the results."
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = ["huggingface_hub>=0.24"]
 
 [project.scripts]
 local-llms = "local_llms_sourcing.cli:main"
