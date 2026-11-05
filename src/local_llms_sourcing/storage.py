@@ -26,7 +26,9 @@ def manifest_path() -> Path:
 
 
 def dir_size(path: Path) -> int:
-    return sum(f.stat().st_size for f in path.rglob("*") if f.is_file())
+    return sum(
+        f.stat().st_size for f in path.rglob("*") if f.is_file() and not f.is_symlink()
+    )
 
 
 def free_space(path: Path) -> int:

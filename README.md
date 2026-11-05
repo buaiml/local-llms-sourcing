@@ -80,14 +80,24 @@ Without `-q`, every downloaded quantization of the model is removed.
 local-llms download -e llama.cpp [--version <version>] [--build <build>]
 ```
 
-Supported engines: `llama.cpp`, installed from the prebuilt binaries in its [GitHub releases](https://github.com/ggml-org/llama.cpp/releases).
+| Engine | `-e` | Installed from | Builds | Platforms |
+| --- | --- | --- | --- | --- |
+| [llama.cpp](https://github.com/ggml-org/llama.cpp) | `llama.cpp` | prebuilt release binaries | `cpu`, `cuda-*`, `rocm-*`, `vulkan`, `metal`, ... | Linux, macOS, Windows |
+| [vLLM](https://github.com/vllm-project/vllm) | `vllm` | PyPI | `cuda` | Linux |
+| [SGLang](https://github.com/sgl-project/sglang) | `sglang` | PyPI | `cuda` | Linux |
+| [MLX](https://github.com/ml-explore/mlx-lm) (`mlx-lm`) | `mlx` | PyPI | `metal`, `cpu`, `cuda-12`, `cuda-13` | Apple Silicon, Linux |
+| [ExLlamaV3](https://github.com/turboderp-org/exllamav3) | `exllamav3` | prebuilt release wheels + PyTorch | `cuda-12.8`, `cuda-13.2` | Linux x64, Windows x64 |
 
-- `--version` picks a release tag such as `b12138` (or just `12138`). The default is the latest release.
-- `--build` picks the hardware build, e.g. `cpu`, `cuda`, `rocm`, `vulkan`, or an exact build like `cuda-12.8`. By default it's chosen from your hardware: CUDA if `nvidia-smi` is present (the newest build your driver supports), ROCm if ROCm is installed, Metal on Apple Silicon, and CPU otherwise. An unknown build lists the ones available for your platform.
+- `--version` picks a release, e.g. `b12138` for llama.cpp or `0.33.0` for vLLM. The default is the latest release.
+- `--build` picks the hardware build, either exactly (`cuda-12.8`) or by family (`cuda` picks the newest). By default it's chosen from your hardware: CUDA if `nvidia-smi` is present (the newest build your driver supports), ROCm if ROCm is installed, Metal on Apple Silicon, and CPU otherwise. GPU-only engines refuse to install without a detected GPU unless you pass `--build` explicitly. An unknown build lists the ones available.
 
-Downloads resume if interrupted and are verified against the release's SHA-256 checksums. Disk space is checked before downloading and again before extracting. Several versions and builds can be installed side by side, e.g. to compare CUDA against Vulkan.
+Several versions and builds can be installed side by side, e.g. to compare CUDA against Vulkan.
 
-After installing, the CLI runs `llama-server --version` and warns if the binary can't run on your system. The official Linux binaries need glibc 2.38 or newer (Ubuntu 24.04, Debian 13, or similar).
+**llama.cpp** downloads resume if interrupted and are verified against the release's SHA-256 checksums. Disk space is checked before downloading and again before extracting. The official Linux binaries need glibc 2.38 or newer (Ubuntu 24.04, Debian 13, or similar).
+
+**Python engines** (vLLM, SGLang, MLX, ExLlamaV3) are each installed into their own virtual environment, created with the same Python that runs `local-llms`, so that Python must be one the engine supports (3.11+ for vLLM, SGLang, and MLX). pip shows its own progress and caches downloads, so re-running after a failure doesn't download everything again. Their full size isn't known until pip resolves dependencies, so the disk check uses an estimate (about 12-14 GB for vLLM and SGLang, which pull in PyTorch and CUDA libraries). ExLlamaV3 is installed from its prebuilt wheels, which bundle compiled CUDA kernels, together with the matching PyTorch CUDA build.
+
+After installing, the CLI checks the engine actually starts (`llama-server --version`, or importing the Python package) and warns if it doesn't.
 
 GitHub limits unauthenticated API requests to 60 per hour. If you hit the limit, set `GITHUB_TOKEN`.
 
