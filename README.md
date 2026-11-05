@@ -37,7 +37,7 @@ pytest
 
 ## CLI usage
 
-Only model management is available so far; benchmarking and submission are still in progress.
+Only model and engine management are available so far; benchmarking and submission are still in progress.
 
 ### Download a model
 
@@ -74,9 +74,48 @@ local-llms remove -m <org/name> [-q <quantization>]
 
 Without `-q`, every downloaded quantization of the model is removed.
 
+### Install an inference engine
+
+```sh
+local-llms download -e llama.cpp [--version <version>] [--build <build>]
+```
+
+Supported engines: `llama.cpp`, installed from the prebuilt binaries in its [GitHub releases](https://github.com/ggml-org/llama.cpp/releases).
+
+- `--version` picks a release tag such as `b12138` (or just `12138`). The default is the latest release.
+- `--build` picks the hardware build, e.g. `cpu`, `cuda`, `rocm`, `vulkan`, or an exact build like `cuda-12.8`. By default it's chosen from your hardware: CUDA if `nvidia-smi` is present (the newest build your driver supports), ROCm if ROCm is installed, Metal on Apple Silicon, and CPU otherwise. An unknown build lists the ones available for your platform.
+
+Downloads resume if interrupted and are verified against the release's SHA-256 checksums. Disk space is checked before downloading and again before extracting. Several versions and builds can be installed side by side, e.g. to compare CUDA against Vulkan.
+
+After installing, the CLI runs `llama-server --version` and warns if the binary can't run on your system. The official Linux binaries need glibc 2.38 or newer (Ubuntu 24.04, Debian 13, or similar).
+
+GitHub limits unauthenticated API requests to 60 per hour. If you hit the limit, set `GITHUB_TOKEN`.
+
+### List installed engines
+
+```sh
+local-llms list --engines
+```
+
+### Update an engine
+
+```sh
+local-llms update -e llama.cpp
+```
+
+Installs the latest release for each build you have installed, then removes the older versions.
+
+### Remove an engine
+
+```sh
+local-llms remove -e llama.cpp [--version <version>]
+```
+
+Without `--version`, every installed version and build is removed.
+
 ### Where files are stored
 
-Models and a `manifest.json` index live in `$XDG_DATA_HOME/local-llms` (default `~/.local/share/local-llms`). Set `LOCAL_LLMS_HOME` to use a different directory.
+Models, engines, and a `manifest.json` index live in `$XDG_DATA_HOME/local-llms` (default `~/.local/share/local-llms`). Set `LOCAL_LLMS_HOME` to use a different directory.
 
 ## Crowdsourced results
 
