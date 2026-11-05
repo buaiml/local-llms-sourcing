@@ -16,6 +16,68 @@ You can control:
 - **Inference engine**: choose which backend runs the model
 - **Task**: run the model on different tasks
 
+## Installation
+
+Requires Python 3.10 or newer.
+
+```sh
+git clone https://github.com/buaiml/local-llms-sourcing.git
+cd local-llms-sourcing
+pip install -e .
+```
+
+This installs the `local-llms` command. To keep it isolated from your system Python, install into a virtual environment first (`python -m venv .venv && source .venv/bin/activate`), or use `pipx install -e .`.
+
+To run the tests:
+
+```sh
+pip install pytest
+pytest
+```
+
+## CLI usage
+
+Only model management is available so far; benchmarking and submission are still in progress.
+
+### Download a model
+
+```sh
+local-llms download -m <org/name> [-q <quantization>]
+```
+
+Models come from Hugging Face. For repos that ship GGUF files, `-q/--quantization` is required and selects which files to fetch (case-insensitive, e.g. `Q4_K_M`). If you leave it out, or ask for one that doesn't exist, the error lists the quantizations available. For repos without GGUF files, the whole repo is downloaded.
+
+```sh
+local-llms download -m Qwen/Qwen2.5-7B-Instruct-GGUF -q Q4_K_M
+```
+
+Before downloading, the CLI prints the files and total size and checks there is enough free disk space. Interrupted downloads resume where they left off, and re-running the command for a model you already have is a no-op.
+
+Gated or private repos need a Hugging Face token: set `HF_TOKEN` or log in with the Hugging Face CLI.
+
+### List downloaded models
+
+```sh
+local-llms list --models
+```
+
+```
+MODEL                          QUANT   SIZE    SOURCE
+Qwen/Qwen2.5-7B-Instruct-GGUF  Q4_K_M  4.4 GB  huggingface
+```
+
+### Remove a model
+
+```sh
+local-llms remove -m <org/name> [-q <quantization>]
+```
+
+Without `-q`, every downloaded quantization of the model is removed.
+
+### Where files are stored
+
+Models and a `manifest.json` index live in `$XDG_DATA_HOME/local-llms` (default `~/.local/share/local-llms`). Set `LOCAL_LLMS_HOME` to use a different directory.
+
 ## Crowdsourced results
 
 After a run, you can submit your results to our endpoint. Submissions are aggregated across:
