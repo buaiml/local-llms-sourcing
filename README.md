@@ -123,6 +123,15 @@ local-llms remove -e llama.cpp [--version <version>]
 
 Without `--version`, every installed version and build is removed.
 
+### Chat with a model
+
+```bash
+local-llms chat -m Qwen/Qwen2.5-7B-Instruct-GGUF -q Q4_K_M -e llama.cpp
+local-llms chat    # pick from what you have downloaded and installed
+```
+
+Starts the engine's local server, then opens an interactive chat. A status bar at the bottom shows time to first token (TTFT), live tokens per second, and the token count. Type `/clear` to reset the conversation and `/exit` to quit. Supported engines: llama.cpp, vLLM, SGLang, MLX (ExLlamaV3 is not supported yet). Whether a given model runs on a given engine isn't checked yet.
+
 ### Where files are stored
 
 Models, engines, and a `manifest.json` index live in `$XDG_DATA_HOME/local-llms` (default `~/.local/share/local-llms`). Set `LOCAL_LLMS_HOME` to use a different directory.

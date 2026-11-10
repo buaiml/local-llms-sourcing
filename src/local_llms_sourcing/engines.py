@@ -296,6 +296,10 @@ class LlamaCpp:
             assets=assets,
         )
 
+    def serve_command(self, path: Path, model: str, port: int) -> list[str]:
+        exe = path / ("llama-server.exe" if os.name == "nt" else "llama-server")
+        return [str(exe), "-m", model, "--host", "127.0.0.1", "--port", str(port)]
+
     def check(self, path: Path) -> str | None:
         """Run the installed server binary; return an error message if it can't start."""
         exe = path / ("llama-server.exe" if os.name == "nt" else "llama-server")
@@ -396,11 +400,24 @@ class PipEngine:
     def check(self, path: Path) -> str | None:
         return _run_check([str(_venv_python(path)), "-c", f"import {self.module}"])
 
+    # python -m module and its model flag, for engines that ship an OpenAI-compatible server
+    server_module: str | None = None
+    model_flag = "--model"
+
+    def serve_command(self, path: Path, model: str, port: int) -> list[str]:
+        if not self.server_module:
+            raise EngineError(f"{self.name} has no built-in server, so chat doesn't support it yet")
+        return [
+            str(_venv_python(path)), "-m", self.server_module,
+            self.model_flag, model, "--host", "127.0.0.1", "--port", str(port),
+        ]
+
 
 class VLLM(PipEngine):
     name = "vllm"
     package = "vllm"
     module = "vllm"
+    server_module = "vllm.entrypoints.openai.api_server"
     sizes = {"cuda": 12 * GB}
 
     def builds(self, hw):
@@ -412,6 +429,8 @@ class SGLang(PipEngine):
     name = "sglang"
     package = "sglang"
     module = "sglang"
+    server_module = "sglang.launch_server"
+    model_flag = "--model-path"
     sizes = {"cuda": 14 * GB}
 
     def builds(self, hw):
@@ -422,6 +441,7 @@ class MLX(PipEngine):
     name = "mlx"
     package = "mlx-lm"
     module = "mlx_lm"
+    server_module = "mlx_lm.server"
     sizes = {"metal": 1 * GB, "cpu": 1 * GB, "cuda": 5 * GB}
     EXTRAS = {"metal": None, "cpu": "cpu", "cuda-12": "cuda12", "cuda-13": "cuda13"}
 

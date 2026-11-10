@@ -1,9 +1,9 @@
 import argparse
 import sys
 
-from . import engines, models
+from . import chat, engines, models
 from .env import load_dotenv
-from .storage import human_size
+from .storage import Manifest, human_size
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -32,6 +32,12 @@ def build_parser() -> argparse.ArgumentParser:
         "-q", "--quantization", help="remove only this quantization (default: all)"
     )
     rm.add_argument("--version", help="remove only this engine version (default: all)")
+
+    ch = sub.add_parser("chat", help="chat with a downloaded model on an installed engine")
+    ch.add_argument("-m", "--model", help="model id (default: pick from downloaded models)")
+    ch.add_argument("-q", "--quantization", help="model quantization, e.g. Q4_K_M")
+    ch.add_argument("-e", "--engine", help="engine (default: pick from installed engines)")
+    ch.add_argument("--version", help="engine version (default: newest installed)")
 
     up = sub.add_parser("update", help="update an installed engine to the latest release")
     up.add_argument("-e", "--engine", required=True, help="engine to update")
@@ -70,9 +76,10 @@ def main(argv: list[str] | None = None) -> None:
     load_dotenv()
     parser = build_parser()
     args = parser.parse_args(argv)
-    if getattr(args, "model", None) and (getattr(args, "version", None) or getattr(args, "build", None)):
+    exclusive = args.command in ("download", "remove")
+    if exclusive and getattr(args, "model", None) and (getattr(args, "version", None) or getattr(args, "build", None)):
         parser.error("--version and --build only apply to engines (-e)")
-    if getattr(args, "engine", None) and getattr(args, "quantization", None):
+    if exclusive and getattr(args, "engine", None) and getattr(args, "quantization", None):
         parser.error("--quantization only applies to models (-m)")
     try:
         if args.command == "download":
@@ -99,7 +106,12 @@ def main(argv: list[str] | None = None) -> None:
                     print(f"Removed {e.engine} {e.version} ({e.build}), freed {human_size(e.size)}")
         elif args.command == "update":
             engines.update(args.engine)
-    except (models.ModelError, engines.EngineError) as exc:
+        elif args.command == "chat":
+            manifest = Manifest()
+            model = chat.pick_model(manifest, args.model, args.quantization)
+            engine = chat.pick_engine(manifest, args.engine, args.version)
+            chat.run(engine, model)
+    except (models.ModelError, engines.EngineError, chat.ChatError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         sys.exit(1)
 
