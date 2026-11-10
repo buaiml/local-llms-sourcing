@@ -536,6 +536,7 @@ def install(name: str, version: str | None = None, build: str | None = None, out
     )
     for desc, size in plan.items:
         out(f"  {desc}  {human_size(size)}" if size is not None else f"  {desc}")
+    out(f"Destination: {engines_dir() / backend.name / f'{plan.version}-{plan.build}'}")
 
     root = engines_dir() / backend.name
     root.mkdir(parents=True, exist_ok=True)

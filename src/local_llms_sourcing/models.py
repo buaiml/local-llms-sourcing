@@ -82,11 +82,11 @@ def download(model: str, quantization: str | None, out=print) -> ModelEntry:
     api = HfApi()
     sha, files = resolve(api, model, quantization)
     total = sum(s for _, s in files)
-    out(f"Downloading {len(files)} file(s) from {model}, {human_size(total)}:")
+    target = models_dir() / dir_name(model) / (quantization.upper() if quantization else "full")
+    out(f"Downloading {len(files)} file(s) from {model}, {human_size(total)}, to {target}:")
     for name, size in files:
         out(f"  {name}  {human_size(size)}")
 
-    target = models_dir() / dir_name(model) / (quantization.upper() if quantization else "full")
     target.mkdir(parents=True, exist_ok=True)
     already = dir_size(target)
     needed = max(total - already, 0)

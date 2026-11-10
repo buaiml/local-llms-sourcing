@@ -2,6 +2,7 @@ import argparse
 import sys
 
 from . import engines, models
+from .env import load_dotenv
 from .storage import human_size
 
 
@@ -66,6 +67,7 @@ def cmd_list_engines() -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
+    load_dotenv()
     parser = build_parser()
     args = parser.parse_args(argv)
     if getattr(args, "model", None) and (getattr(args, "version", None) or getattr(args, "build", None)):
